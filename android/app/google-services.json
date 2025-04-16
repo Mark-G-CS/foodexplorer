@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225125928529",
+    "project_id": "foodexploreapp-57348",
+    "storage_bucket": "foodexploreapp-57348.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225125928529:android:f4500e73b1bb98fd76b270",
+        "android_client_info": {
+          "package_name": "com.example.foodexplorer2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHH5Oh_V8DAP1ZRwh8GS0913RkCVj5rik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

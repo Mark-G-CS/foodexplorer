@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// This screen takes the [cuisine] (e.g., "Burgers") from the slot machine,
 /// determines the user’s location (or prompts for a zip code if location services
@@ -161,12 +163,29 @@ class _ResultScreenState extends State<ResultScreen> {
       rating: chosen['rating'] != null ? chosen['rating'].toDouble() : 0.0,
       placeId: chosen['place_id'] ?? '',
       address: chosen['vicinity'] ?? '',
+
+
     );
 
     setState(() {
       _restaurant = restaurant;
       _state = SearchState.loaded;
     });
+  }
+  Future<void> _recordResult(String result) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'history': FieldValue.arrayUnion([result]),
+
+      });
+      print("RECORDING RESULT!");
+    }
+
+
   }
 
   /// Constructs the URL to fetch a photo from the Google Places Photo API.
@@ -307,6 +326,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           );
         }
+        _recordResult(_restaurant!.name);
         break;
     }
 

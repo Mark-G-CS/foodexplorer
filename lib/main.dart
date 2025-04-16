@@ -1,8 +1,19 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'result_screen.dart'; // Import ResultScreen
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'LoginAuth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'EditAccount.dart';
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
@@ -27,7 +38,7 @@ class SlotMachineWidget extends StatefulWidget {
 
 class _SlotMachineWidgetState extends State<SlotMachineWidget>
     with SingleTickerProviderStateMixin {
-  final List<String> cuisines = [
+   List<String> cuisines = [
     'Burgers', 'BBQ', 'Chinese', 'Hawaiian', 'Soul Food',
     'Pizza', 'Mexican', 'Italian', 'Steak', 'Seafood',
     'Thai', 'Indian', 'Japanese', 'Mediterranean', 'Korean',
@@ -42,9 +53,27 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(duration: Duration(seconds: 3), vsync: this);
+    _loadPreferences(); // ⬅️ call your custom method
   }
 
-  void _spin() {
+   Future<void> _loadPreferences() async {
+     final user = FirebaseAuth.instance.currentUser;
+     if (user != null) {
+       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+       if (doc.exists) {
+         final data = doc.data();
+         final prefs = List<String>.from(data?['preferences'] ?? []);
+
+         setState(() {
+           cuisines.addAll(prefs.where((p) => !cuisines.contains(p)));
+         });
+       }
+     }
+   }
+
+
+   Future<void> _spin() async {
     int rotations = _random.nextInt(10) + 10; // 10 to 19 full cycles
     int extraIndex = _random.nextInt(cuisines.length);
     int endValue = rotations * cuisines.length + extraIndex;
@@ -63,8 +92,26 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => ResultScreen(cuisine: cuisines[selectedIndex])),
+
       );
     });
+
+
+  }
+
+  void _navigateToAccountPage() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null){
+     Navigator.push(
+       context,
+       MaterialPageRoute(builder: (context) => LoginAuth()),
+     );
+    }else {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => AccountPage()),
+      );
+      }
   }
 
   @override
@@ -76,7 +123,20 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Food Slot Machine')),
+      appBar: AppBar(
+        title: Text('Food Slot Machine'),
+        actions: <Widget>[
+          TextButton.icon(
+            icon: Icon(Icons.account_circle),
+            onPressed: _navigateToAccountPage,
+            label: Text(
+              'Account',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            )
+
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min, // Ensures column takes only necessary space
@@ -106,7 +166,6 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
           ],
         ),
       ),
-
     );
   }
 }

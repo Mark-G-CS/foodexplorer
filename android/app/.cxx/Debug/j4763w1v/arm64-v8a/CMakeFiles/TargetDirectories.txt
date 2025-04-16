@@ -1,0 +1,2 @@
+C:/SocialMediaProject/foodexplorer/android/app/.cxx/Debug/j4763w1v/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/SocialMediaProject/foodexplorer/android/app/.cxx/Debug/j4763w1v/arm64-v8a/CMakeFiles/rebuild_cache.dir
