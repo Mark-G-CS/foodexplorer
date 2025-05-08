@@ -68,6 +68,59 @@ class _AccountPageState extends State<AccountPage> {
 
     }
   }
+  Future<void> _clearPreferences() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Clear Preferences?'),
+        content: Text('Are you sure you want to delete all preferences?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Yes, clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _firestore.collection('users').doc(user!.uid).update({
+        'preferences': [],
+      });
+      _loadUserData();
+    }
+  }
+
+  Future<void> _clearHistory() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Clear History?'),
+        content: Text('Are you sure you want to delete your entire food history?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Yes, clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _firestore.collection('users').doc(user!.uid).update({
+        'history': [],
+      });
+      _loadUserData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,34 +147,124 @@ class _AccountPageState extends State<AccountPage> {
             children: [
               Text("Welcome, ${user!.displayName ?? 'User'}",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              SizedBox(height: 20),
+              SizedBox(height: 24),
 
-              // --- History ---
-              Text("History:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ...history.map((h) => ListTile(title: Text(h))).toList(),
-              Divider(),
-
-              // --- Preferences ---
-              Text("Preferences:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              Wrap(
-                spacing: 8.0,
-                children: preferences
-                    .map((pref) => Chip(
-                  label: Text(pref),
-                  onDeleted: () => _removePreference(pref),
-                ))
-                    .toList(),
+              // --- History Section ---
+              Text("History",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                padding: EdgeInsets.all(12),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: 200, // 👈 set your max height
+                  ),
+                  child: history.isEmpty
+                      ? Text("No history yet.")
+                      : Scrollbar(
+                    thumbVisibility: true,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: history.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Text(history[index]),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
-              SizedBox(height: 12),
+              if (history.isNotEmpty) ...[
+                SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: _clearHistory,
+                    icon: Icon(Icons.delete_outline),
+                    label: Text("Clear History"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade50,
+                      foregroundColor: Colors.red.shade800,
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      textStyle: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+
+              // --- Preferences Section ---
+              Text("Preferences",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                padding: EdgeInsets.all(12),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: 200, // 👈 set your max height
+                  ),
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: preferences
+                            .map((pref) => Chip(
+                          label: Text(pref),
+                          onDeleted: () => _removePreference(pref),
+                        ))
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 24),
+              if (preferences.isNotEmpty) ...[
+                SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: _clearPreferences,
+                    icon: Icon(Icons.delete_sweep_outlined),
+                    label: Text("Clear Preferences"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade100,
+                      foregroundColor: Colors.deepOrange.shade800,
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      textStyle: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+              SizedBox(height: 24),
+              // --- Add Preference Input ---
               Row(
+
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _preferenceController,
-                      decoration: InputDecoration(labelText: 'Add preference'),
+                      decoration: InputDecoration(
+                        labelText: 'Add preference',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
+                  SizedBox(width: 8),
                   IconButton(
                     icon: Icon(Icons.add),
                     onPressed: () {
@@ -130,8 +273,10 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ],
               ),
+              SizedBox(height: 24),
             ],
           ),
+
         ),
       ),
     );

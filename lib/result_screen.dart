@@ -124,6 +124,21 @@ class _ResultScreenState extends State<ResultScreen> {
       }
     }
   }
+  Widget _styledButton(String label, VoidCallback onTap) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      ),
+      child: Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
 
   /// Searches Google Places for restaurants matching [widget.cuisine] near [position].
   Future<void> _searchRestaurant(Position position) async {
@@ -263,66 +278,73 @@ class _ResultScreenState extends State<ResultScreen> {
           content = SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
+
               child: Column(
                 children: [
-                  Text(
-                    _restaurant!.name,
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    _restaurant!.address,
-                    style: TextStyle(fontSize: 18),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Approximately ${distance.toStringAsFixed(1)} miles away',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 16),
-                  if (photoUrl != null)
-                    Image.network(photoUrl)
-                  else
-                    Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: Center(child: Text('No photo available')),
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 12,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
                     ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _restaurant!.name,
+                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          _restaurant!.address,
+                          style: TextStyle(fontSize: 18),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Approximately ${distance.toStringAsFixed(1)} miles away',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(height: 16),
+                        if (photoUrl != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(photoUrl),
+                          )
+                        else
+                          Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: Center(child: Text('No photo available')),
+                          ),
+                      ],
+                    ),
+                  ),
                   SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // "Spin Again" returns the user to the food slots.
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text('Spin Again'),
-                      ),
-                      // "Reviews" opens the restaurant’s page in Google Maps.
-                      ElevatedButton(
-                        onPressed: () {
-                          final url = 'https://search.google.com/local/reviews?placeid=${_restaurant!.placeId}';
-                          _launchUrl(url);
-
-                        },
-                        child: Text('Reviews'),
-                      ),
-                      // "Navigate" opens Google Maps directions to the restaurant.
-                      ElevatedButton(
-                        onPressed: () {
-                          final url =
-                              'https://www.google.com/maps/dir/?api=1&destination=${_restaurant!.address}';
-                          _launchUrl(url);
-                        },
-                        child: Text('Navigate'),
-                      ),
+                      _styledButton("Spin Again", () => Navigator.pop(context)),
+                      _styledButton("Reviews", () {
+                        final url = 'https://search.google.com/local/reviews?placeid=${_restaurant!.placeId}';
+                        _launchUrl(url);
+                      }),
+                      _styledButton("Navigate", () {
+                        final url = 'https://www.google.com/maps/dir/?api=1&destination=${_restaurant!.address}';
+                        _launchUrl(url);
+                      }),
                     ],
-                  )
+                  ),
                 ],
-              ),
+              )
+
             ),
           );
         }
@@ -332,9 +354,26 @@ class _ResultScreenState extends State<ResultScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.cuisine} Near Me'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          '${widget.cuisine} Near Me',
+          style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600),
+        ),
+        iconTheme: IconThemeData(color: Colors.deepPurple),
       ),
-      body: content,
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade50, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(child: content),
+      ),
     );
+
   }
 }

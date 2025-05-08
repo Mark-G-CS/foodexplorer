@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Food Slot Machine',
+      title: 'Food Explorer',
       home: SlotMachineWidget(),
     );
   }
@@ -43,34 +43,48 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
     'Pizza', 'Mexican', 'Italian', 'Steak', 'Seafood',
     'Thai', 'Indian', 'Japanese', 'Mediterranean', 'Korean',
   ];
+   bool _showBounce = false;
 
-  AnimationController? _controller;
+
+   AnimationController? _controller;
   Animation<double>? _animation;
   final Random _random = Random();
   int selectedIndex = 0; // Track selected cuisine index
+
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(duration: Duration(seconds: 3), vsync: this);
-    _loadPreferences(); // ⬅️ call your custom method
+    _listenToPreferences(); // ⬅️ use listener instead of _loadPreferences
   }
 
-   Future<void> _loadPreferences() async {
+
+   void _listenToPreferences() {
      final user = FirebaseAuth.instance.currentUser;
      if (user != null) {
-       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+       FirebaseFirestore.instance
+           .collection('users')
+           .doc(user.uid)
+           .snapshots()
+           .listen((doc) {
+         if (doc.exists) {
+           final data = doc.data();
+           final prefs = List<String>.from(data?['preferences'] ?? []);
 
-       if (doc.exists) {
-         final data = doc.data();
-         final prefs = List<String>.from(data?['preferences'] ?? []);
-
-         setState(() {
-           cuisines.addAll(prefs.where((p) => !cuisines.contains(p)));
-         });
-       }
+           setState(() {
+             cuisines = [
+               'Burgers', 'BBQ', 'Chinese', 'Hawaiian', 'Soul Food',
+               'Pizza', 'Mexican', 'Italian', 'Steak', 'Seafood',
+               'Thai', 'Indian', 'Japanese', 'Mediterranean', 'Korean',
+             ];
+             cuisines.addAll(prefs.where((p) => !cuisines.contains(p)));
+           });
+         }
+       });
      }
    }
+
 
 
    Future<void> _spin() async {
@@ -79,7 +93,7 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
     int endValue = rotations * cuisines.length + extraIndex;
 
     _animation = Tween<double>(begin: 0, end: endValue.toDouble()).animate(
-      CurvedAnimation(parent: _controller!, curve: Curves.decelerate),
+      CurvedAnimation(parent: _controller!, curve: Curves.easeOutBack),
     )..addListener(() {
       setState(() {
         selectedIndex = _animation!.value.floor() % cuisines.length;
@@ -88,13 +102,30 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
 
     _controller?.reset();
     _controller?.forward().then((_) {
-      // Navigate to ResultScreen after animation ends
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ResultScreen(cuisine: cuisines[selectedIndex])),
+      setState(() {
+        _showBounce = true;
+      });
 
-      );
+      // Wait for a moment so user sees the bounce
+      Future.delayed(Duration(milliseconds: 800), () {
+        setState(() {
+          _showBounce = false;
+        });
+
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                ResultScreen(cuisine: cuisines[selectedIndex]),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: Duration(milliseconds: 500),
+          ),
+        );
+      });
     });
+
 
 
   }
@@ -124,21 +155,40 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Food Slot Machine'),
-        actions: <Widget>[
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          '🍽️ FOOD EXPLORER',
+          style: TextStyle(
+            color: Colors.deepPurple,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
           TextButton.icon(
-            icon: Icon(Icons.account_circle),
+            icon: Icon(Icons.account_circle, color: Colors.deepPurple),
             onPressed: _navigateToAccountPage,
             label: Text(
               'Account',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            )
-
+              style: TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
-      body: Center(
-        child: Column(
+
+      body: Container(
+    decoration: BoxDecoration(
+    gradient: LinearGradient(
+    colors: [Colors.purple.shade50, Colors.white],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    ),
+    ),
+    child: Center(
+    child: Column(
           mainAxisSize: MainAxisSize.min, // Ensures column takes only necessary space
           children: [
             Container(
@@ -146,19 +196,38 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
               width: 300,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.black, width: 4),
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 15,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(color: Colors.deepPurple.shade100, width: 2),
               ),
-              child: Text(
-                cuisines[selectedIndex],
-                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              child: AnimatedScale(
+                scale: _showBounce ? 1.2 : 1.0,
+                duration: Duration(milliseconds: 400),
+                curve: Curves.easeOutBack,
+                child: Text(
+                  cuisines[selectedIndex],
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87 ,
+                    letterSpacing: 1.2,
+                  ),
+                ),
               ),
             ),
+
             SizedBox(height: 40),
             ElevatedButton(
               onPressed: _spin,
               style: ElevatedButton.styleFrom(
+
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               ),
               child: Text("Spin", style: TextStyle(fontSize: 24)),
@@ -166,6 +235,7 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
           ],
         ),
       ),
+            ),
     );
   }
 }

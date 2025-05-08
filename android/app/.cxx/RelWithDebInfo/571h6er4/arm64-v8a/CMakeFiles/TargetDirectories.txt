@@ -1,0 +1,2 @@
+C:/SocialMediaProject/foodexplorer/android/app/.cxx/RelWithDebInfo/571h6er4/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/SocialMediaProject/foodexplorer/android/app/.cxx/RelWithDebInfo/571h6er4/arm64-v8a/CMakeFiles/rebuild_cache.dir
