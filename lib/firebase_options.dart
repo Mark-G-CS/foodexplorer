@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '225125928529',
     projectId: 'foodexploreapp-57348',
     storageBucket: 'foodexploreapp-57348.firebasestorage.app',
-    iosBundleId: 'com.example.foodexplorer2',
+    iosBundleId: 'com.example.WhereToEatMachine',
   );
 }

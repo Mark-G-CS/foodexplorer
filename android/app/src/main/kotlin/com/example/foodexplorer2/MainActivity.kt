@@ -1,4 +1,4 @@
-package com.example.foodexplorer2
+package com.example.WhereToEatMachine
 
 import io.flutter.embedding.android.FlutterActivity
 

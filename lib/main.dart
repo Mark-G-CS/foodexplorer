@@ -25,6 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Food Explorer',
       home: SlotMachineWidget(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -52,12 +53,46 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
   int selectedIndex = 0; // Track selected cuisine index
 
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(duration: Duration(seconds: 3), vsync: this);
-    _listenToPreferences(); // ⬅️ use listener instead of _loadPreferences
-  }
+   @override
+   void initState() {
+     super.initState();
+     _controller = AnimationController(duration: Duration(seconds: 3), vsync: this);
+
+     // Delay listener setup until the first frame is rendered
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+       _setupPreferenceListenerWhenSignedIn();
+     });
+   }
+   void _setupPreferenceListenerWhenSignedIn() async {
+     User? user;
+
+     // Wait until FirebaseAuth has a user (retry loop)
+     while (user == null) {
+       user = FirebaseAuth.instance.currentUser;
+       if (user == null) await Future.delayed(Duration(milliseconds: 100));
+     }
+
+     FirebaseFirestore.instance
+         .collection('users')
+         .doc(user.uid)
+         .snapshots()
+         .listen((doc) {
+       if (doc.exists) {
+         final data = doc.data();
+         final prefs = List<String>.from(data?['preferences'] ?? []);
+
+         setState(() {
+           cuisines = [
+             'Burgers', 'BBQ', 'Chinese', 'Hawaiian', 'Soul Food',
+             'Pizza', 'Mexican', 'Italian', 'Steak', 'Seafood',
+             'Thai', 'Indian', 'Japanese', 'Mediterranean', 'Korean',
+           ];
+           cuisines.addAll(prefs.where((p) => !cuisines.contains(p)));
+         });
+       }
+     });
+   }
+
 
 
    void _listenToPreferences() {
@@ -155,7 +190,8 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.yellow.shade100,
+        shadowColor: Colors.black,
         elevation: 0,
         title: Text(
           '🍽️ FOOD EXPLORER',
@@ -175,14 +211,16 @@ class _SlotMachineWidgetState extends State<SlotMachineWidget>
                 fontWeight: FontWeight.bold,
               ),
             ),
+
           ),
+
         ],
       ),
 
       body: Container(
     decoration: BoxDecoration(
     gradient: LinearGradient(
-    colors: [Colors.purple.shade50, Colors.white],
+    colors: [Colors.yellow.shade50, Colors.red.shade100],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     ),
