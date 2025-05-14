@@ -45,7 +45,7 @@ class Restaurant {
 
 class _ResultScreenState extends State<ResultScreen> {
   // Replace with your own Google API key.
-  static const String googleApiKey = 'AIzaSyD2GJwTtGzlYI-kVpjphXKmcR1UigQQffE';
+  static const String googleApiKey = '';
 
   SearchState _state = SearchState.loading;
   Restaurant? _restaurant;
